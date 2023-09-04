@@ -14,7 +14,11 @@ class DatabaseConnector():
 #            print(db_creds)
             return db_creds
 
-    def init_db_engine(self, db_creds):
+    def init_db_engine(self):
+        """Read db creadential file and returns a SQLalchemy connection engine"""
+
+        db_creds = self.read_db_creds()
+
         DATABASE_TYPE = 'postgresql'
         DBAPI = 'psycopg2'
         USER = db_creds["RDS_USER"]
@@ -24,7 +28,6 @@ class DatabaseConnector():
         DATABASE = db_creds["RDS_DATABASE"]
         url = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
         engine = create_engine(url)
-        # TODO: read db_creds and initialise and return a sqlalchemy db engine
         return engine
 
     def list_db_tables(self, db_engine):

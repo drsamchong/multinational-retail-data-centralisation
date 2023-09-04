@@ -4,13 +4,21 @@ from data_extraction import DataExtractor
 from data_cleaning import DataCleaning
 
 
-if __name__ == "__main__":
-    db_conn = DatabaseConnector()
-    #db_creds = db_conn.read_db_creds()
-    #db_conn.list_db_tables(engine)
-    #engine = db_conn.init_db_engine(db_creds)
-
+def main():
+    rds_conn = DatabaseConnector("db_creds.yaml")
     data_ext = DataExtractor()
-    users_df = data_ext.read_rds_table(db_conn, "legacy_users")
 
+    users_df = data_ext.read_rds_table(rds_conn, "legacy_users")
+    print("Unclean!")
     print(users_df.head())
+
+    cleaner = DataCleaning()
+    cleaned_df = cleaner.clean_user_data(users_df)
+    print(cleaned_df.head(10))
+
+
+
+
+
+if __name__ == "__main__":
+    main()
