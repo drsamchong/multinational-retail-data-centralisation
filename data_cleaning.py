@@ -12,10 +12,10 @@ class DataCleaning():
         # Any rows with na contain no values in any columns, so drop the rows
         clean_df.dropna(inplace=True)
 
-        # date_of_birth, join_date object to datetime
+        # change dtypes of date_of_birth, join_date object to datetime
         date_cols = ["date_of_birth", "join_date"]
         for col in date_cols:
-            clean_df.loc[:, col] = self.convert_date_column(clean_df, col)
+            clean_df[col] = self.convert_date_column(clean_df, col)
         
         # drop any rows with unconverted, missing dates (unfathomable values in all columns)
         clean_df.dropna(subset=date_cols, inplace=True)
@@ -26,6 +26,7 @@ class DataCleaning():
         # clean email address values
         clean_df = self.clean_email_addresses(clean_df, "email_address")
 
+        # clean phone_numbers
         clean_df = self.clean_phone_numbers(clean_df)
 
 
@@ -33,7 +34,8 @@ class DataCleaning():
         # apply seems to remove the category type from the columns
         clean_df = self.categorise_columns(clean_df, ["country", "country_code"])
 
-
+        # Clean old index column and reset
+        clean_df = self.tidy_index(clean_df) 
 
         return clean_df
 
@@ -49,7 +51,7 @@ class DataCleaning():
                       .fillna(pd.to_datetime(df[col_name], format=date_format2, errors="coerce"))\
                       .fillna((pd.to_datetime(df[col_name], format=date_format3, errors="coerce")))
         
-        print(f"Missing {col_name} dates: {new_dates.isna().sum()}")
+#        print(f"Missing {col_name} dates: {new_dates.isna().sum()}")
 
         return new_dates
 
@@ -86,8 +88,8 @@ class DataCleaning():
         
         # Target format is international without + prefix to dialling code
 
-        # remove (0) area code
-        df["phone_number"] = df["phone_number"].str.replace("(0)", "")
+        # remove (0) area code. Include regex argument to avoid FutureWarning
+        df["phone_number"] = df["phone_number"].str.replace("(0)", "", regex=False)
 
         # remove other non-numeric characters
         df["phone_number"] = df["phone_number"].str.findall("\d+").apply(lambda n: "".join(map(str, n)))
@@ -118,3 +120,12 @@ class DataCleaning():
         if row["phone_number"][:len(code)] != code:
             row["phone_number"] = f"{code}{row['phone_number']}"
         return row
+    
+
+    def tidy_index(self, df):
+        """Drops column generated from old index and resets current index"""
+
+        df.drop(columns="index", inplace=True)
+        df.reset_index(drop=True)
+
+        return df
