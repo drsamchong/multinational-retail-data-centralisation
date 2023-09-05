@@ -17,6 +17,9 @@ class DataCleaning():
         for col in date_cols:
             clean_df.loc[:, col] = self.convert_date_column(clean_df, col)
 
+        # correct country code to match country name
+        clean_df = self.correct_country_code(clean_df)
+
         return clean_df
 
 
@@ -32,3 +35,16 @@ class DataCleaning():
                       .fillna((pd.to_datetime(df[col_name], format=date_format3, errors="coerce")))
 
         return new_dates
+
+
+    def correct_country_code(self, df):
+        """Check for rows where country and code do not match and correct country code"""
+
+        country_code_map = { "United Kingdom": "GB", 
+                             "Germany": "DE",
+                             "United States": "US"}
+
+        for country, code in country_code_map.items():
+            df.loc[(df["country"] == country) & (df["country_code"] != code), "country_code"] = code
+
+        return df
