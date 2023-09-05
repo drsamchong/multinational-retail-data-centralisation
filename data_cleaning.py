@@ -22,13 +22,18 @@ class DataCleaning():
 
         # correct country code to match country name
         clean_df = self.correct_country_code(clean_df)
-#        print(f"Missing values: {clean_df.isna().sum()}")
-
-        # change dtype of the country and country_code columns to category
-        clean_df = self.categorise_columns(clean_df, ["country", "country_code"])
 
         # clean email address values
         clean_df = self.clean_email_addresses(clean_df, "email_address")
+
+        clean_df = self.clean_phone_numbers(clean_df)
+
+
+        # change dtype of the country and country_code columns to category - this has to be done after phone_numbers because 
+        # apply seems to remove the category type from the columns
+        clean_df = self.categorise_columns(clean_df, ["country", "country_code"])
+
+
 
         return clean_df
 
@@ -75,3 +80,41 @@ class DataCleaning():
 
         df[col_name] = df[col_name].str.replace("@@", "@")
         return df
+
+
+    def clean_phone_numbers(self, df):
+        
+        # Target format is international without + prefix to dialling code
+
+        # remove (0) area code
+        df["phone_number"] = df["phone_number"].str.replace("(0)", "")
+
+        # remove other non-numeric characters
+        df["phone_number"] = df["phone_number"].str.findall("\d+").apply(lambda n: "".join(map(str, n)))
+
+        # add country's dialling code if missing
+        df = df.apply(lambda x: self.check_dialling_code(x), axis=1)
+
+        # change dtype to int
+        df["phone_number"] = df["phone_number"].astype(int)
+
+        return df
+    
+
+    def check_dialling_code(self, row):
+        """
+        Helper function checks the beginning of the phone number has the correct dialling code based on country code
+        and adds if not.
+        """
+
+    
+        dialling_codes = {"GB": "44",
+                        "US": "1",
+                        "DE": "49"}
+
+        country = row["country_code"]
+        code = dialling_codes[country]
+        
+        if row["phone_number"][:len(code)] != code:
+            row["phone_number"] = f"{code}{row['phone_number']}"
+        return row
