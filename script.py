@@ -9,12 +9,15 @@ def main():
     data_ext = DataExtractor()
 
     users_df = data_ext.read_rds_table(rds_conn, "legacy_users")
-    print("Unclean!")
-    print(users_df.head())
+    # print("Unclean!")
+    # print(users_df.head())
 
     cleaner = DataCleaning()
     cleaned_df = cleaner.clean_user_data(users_df)
+
+    print("Cleaned data:\n")
     print(cleaned_df.head(10))
+    print(cleaned_df.info())
 
 
 

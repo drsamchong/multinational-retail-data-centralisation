@@ -1,5 +1,4 @@
 import yaml
-import psycopg2
 from sqlalchemy import create_engine, inspect
 
 class DatabaseConnector():
@@ -34,7 +33,7 @@ class DatabaseConnector():
         # SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
         inspector = inspect(db_engine)
         tables = inspector.get_table_names()
-        print("Tables in DB:")
+        print("Tables in DB:\n")
         for table in tables:
             print(table) 
         
@@ -43,7 +42,6 @@ class DatabaseConnector():
 if __name__ == "__main__":
     conn = DatabaseConnector()
     db_creds = conn.read_db_creds()
-#    print(db_creds)
     engine = conn.init_db_engine(db_creds)
     #engine.connect()
     conn.list_db_tables(engine)

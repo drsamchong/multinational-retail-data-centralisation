@@ -5,7 +5,6 @@ class DataExtractor():
     def read_rds_table(self, db_conn, table_name):
 
         engine = db_conn.init_db_engine()
-        print("Might print the tables...")
         db_conn.list_db_tables(engine)
 
 
