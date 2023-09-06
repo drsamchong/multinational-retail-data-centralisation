@@ -15,7 +15,7 @@ class DataCleaning():
         # change dtypes of date_of_birth, join_date object to datetime
         date_cols = ["date_of_birth", "join_date"]
         for col in date_cols:
-            clean_df[col] = self.convert_date_column(clean_df, col)
+            clean_df[col] = self.convert_date_column(clean_df[col])
         
         # drop any rows with unconverted, missing dates (unfathomable values in all columns)
         clean_df.dropna(subset=date_cols, inplace=True)
@@ -41,16 +41,20 @@ class DataCleaning():
 
 
 
-    def convert_date_column(self, df, col_name):
+#    def convert_date_column(self, df, col_name):
+    def convert_date_column(self, date_col):
+
 
         date_format = "%Y-%m-%d"
         date_format2 = "%Y %B %d"
         date_format3 = "%B %Y %d"
 
-        new_dates = pd.to_datetime(df[col_name], format=date_format, errors="coerce") \
-                      .fillna(pd.to_datetime(df[col_name], format=date_format2, errors="coerce"))\
-                      .fillna((pd.to_datetime(df[col_name], format=date_format3, errors="coerce")))
-        
+
+        new_dates = pd.to_datetime(date_col, format=date_format, errors="coerce") \
+                      .fillna(pd.to_datetime(date_col, format=date_format2, errors="coerce"))\
+                      .fillna((pd.to_datetime(date_col, format=date_format3, errors="coerce")))
+
+
 #        print(f"Missing {col_name} dates: {new_dates.isna().sum()}")
 
         return new_dates
@@ -120,6 +124,10 @@ class DataCleaning():
         if row["phone_number"][:len(code)] != code:
             row["phone_number"] = f"{code}{row['phone_number']}"
         return row
+    
+    def fix_address_case(self, col):
+        # todo: change address to title case
+        pass
     
 
     def tidy_index(self, df):
