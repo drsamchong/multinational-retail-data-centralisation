@@ -29,6 +29,9 @@ class DataCleaning():
         # clean phone_numbers
         clean_df = self.clean_phone_numbers(clean_df)
 
+        # Set address case to title (capitalise each word)
+        clean_df["address"] = self.fix_address_case(clean_df["address"])
+
 
         # change dtype of the country and country_code columns to category - this has to be done after phone_numbers because 
         # apply seems to remove the category type from the columns
@@ -43,20 +46,10 @@ class DataCleaning():
 
 #    def convert_date_column(self, df, col_name):
     def convert_date_column(self, date_col):
+        """Change dtype of column to datetime"""
 
-
-        date_format = "%Y-%m-%d"
-        date_format2 = "%Y %B %d"
-        date_format3 = "%B %Y %d"
-
-
-        new_dates = pd.to_datetime(date_col, format=date_format, errors="coerce") \
-                      .fillna(pd.to_datetime(date_col, format=date_format2, errors="coerce"))\
-                      .fillna((pd.to_datetime(date_col, format=date_format3, errors="coerce")))
-
-
+        new_dates = pd.to_datetime(date_col, infer_datetime_format=True, errors="coerce")
 #        print(f"Missing {col_name} dates: {new_dates.isna().sum()}")
-
         return new_dates
 
 
@@ -89,8 +82,12 @@ class DataCleaning():
 
 
     def clean_phone_numbers(self, df):
+        """Formats phones numbers as close to E.164 standard as possible without "+" prefix to store as int"""
         
         # Target format is international without + prefix to dialling code
+
+        # extract out any phone extension to new column
+        df[["phone_number", "phone_ext"]] = df["phone_number"].str.split("x", expand=True)
 
         # remove (0) area code. Include regex argument to avoid FutureWarning
         df["phone_number"] = df["phone_number"].str.replace("(0)", "", regex=False)
@@ -98,13 +95,25 @@ class DataCleaning():
         # remove other non-numeric characters
         df["phone_number"] = df["phone_number"].str.findall("\d+").apply(lambda n: "".join(map(str, n)))
 
+        # remove leading zeroes
+        df["phone_number"] = df["phone_number"].str.lstrip("0")
+
         # add country's dialling code if missing
         df = df.apply(lambda x: self.check_dialling_code(x), axis=1)
 
-        # change dtype to int
-        df["phone_number"] = df["phone_number"].astype(int)
+        # change dtype pf phone_number and ext to int
+        phone_col = ["phone_number", "phone_ext"]
+        for col in phone_col:
+            df[col] = self.change_column_to_int(df[col])
 
         return df
+    
+    def change_column_to_int(self, col):
+        """Change dtype of column to Int64"""
+
+        # Use Int64 to allow for None in phone ext
+        col = col.astype("Int64")
+        return col
     
 
     def check_dialling_code(self, row):
@@ -127,7 +136,8 @@ class DataCleaning():
     
     def fix_address_case(self, col):
         # todo: change address to title case
-        pass
+        col = col.str.title()
+        return col
     
 
     def tidy_index(self, df):
