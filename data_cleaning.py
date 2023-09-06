@@ -130,8 +130,11 @@ class DataCleaning():
         country = row["country_code"]
         code = dialling_codes[country]
         
-        if row["phone_number"][:len(code)] != code:
-            row["phone_number"] = f"{code}{row['phone_number']}"
+        # if code is present, remove and then strip any zeroes between country and area codes
+        if row["phone_number"][:len(code)] == code:
+            row["phone_number"] = row["phone_number"][len(code):].lstrip("0")
+        row["phone_number"] = f"{code}{row['phone_number']}"
+
         return row
     
     def fix_address_case(self, col):
