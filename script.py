@@ -19,6 +19,9 @@ def main():
     print(cleaned_df.head(10))
     print(cleaned_df.info())
 
+    local_conn = DatabaseConnector("local_db_creds.yaml")
+    local_conn.upload_to_db(cleaned_df, "dim_users")
+
 
 
 

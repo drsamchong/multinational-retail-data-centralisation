@@ -30,6 +30,8 @@ class DatabaseConnector():
         return engine
 
     def list_db_tables(self, db_engine):
+        """Print the tables existing in the database"""
+
         # SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
         inspector = inspect(db_engine)
         tables = inspector.get_table_names()
@@ -37,6 +39,13 @@ class DatabaseConnector():
         for table in tables:
             print(table) 
         
+
+    def upload_to_db(self, df, name):
+        """Create database engine and write dataframe to database table with specified name"""
+        
+        engine = self.init_db_engine()
+        df.to_sql(name, engine, if_exists="replace")
+
 
 
 if __name__ == "__main__":
