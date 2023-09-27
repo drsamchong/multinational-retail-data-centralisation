@@ -4,7 +4,8 @@ from data_extraction import DataExtractor
 from data_cleaning import DataCleaning
 
 
-def main():
+def process_user_data():
+
     rds_conn = DatabaseConnector("db_creds.yaml")
     data_ext = DataExtractor()
 
@@ -12,15 +13,38 @@ def main():
     # print("Unclean!")
     # print(users_df.head())
 
-    cleaner = DataCleaning()
-    cleaned_df = cleaner.clean_user_data(users_df)
+    user_cleaner = DataCleaning()
+    cleaned_user_df = user_cleaner.clean_user_data(users_df)
 
     print("Cleaned data:\n")
-    print(cleaned_df.head(10))
-    print(cleaned_df.info())
+    print(cleaned_user_df.head(10))
+    print(cleaned_user_df.info())
+
+    return cleaned_user_df
+
+def save_cleaned_data(clean_df, table_name):
 
     local_conn = DatabaseConnector("local_db_creds.yaml")
-    local_conn.upload_to_db(cleaned_df, "dim_users")
+    local_conn.upload_to_db(clean_df, table_name)
+
+
+def process_card_data():
+    data_ext = DataExtractor()
+
+    pdf_url = "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+    card_data = data_ext.retrieve_pdf_data(pdf_url)
+
+    card_cleaner = DataCleaning()
+    cleaned_card_df = card_cleaner.clean_card_data(card_data)
+
+
+
+
+def main():
+
+    cleaned_user_df = process_user_data()
+    save_cleaned_data(cleaned_user_df, "dim_users")
+#    process_card_data()
 
 
 
