@@ -1,5 +1,6 @@
 import pandas as pd
 import tabula
+import requests
 
 class DataExtractor():
     """ A utility class containing methods for extracting data from a variety of source """
@@ -19,3 +20,8 @@ class DataExtractor():
         return pdf_dfs
 
 
+    def list_number_of_stores(self, url, headers):
+
+        response = requests.get(url, headers=headers)
+        n_stores = int(response.json()["number_stores"])
+        return n_stores
