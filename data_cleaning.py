@@ -4,10 +4,10 @@ import numpy as np
 class DataCleaning():
     """ Contains methods to clean data from a variety of data sources """
     
-    def clean_user_data(self, df):
+    def clean_user_data(self, user_df):
 
         # Missing values appear to be represented as a string "NULL" rather than None or np.nan, so replacing
-        clean_df = df.replace("NULL", np.nan)
+        clean_df = self.replace_null_string(user_df)
 
         # Any rows with na contain no values in any columns, so drop the rows
         clean_df.dropna(inplace=True)
@@ -44,7 +44,12 @@ class DataCleaning():
 
 
 
-#    def convert_date_column(self, df, col_name):
+    def replace_null_string(self, df):
+        """Replaces missing values represented as a "NULL" string by np.nan"""
+
+        return df.replace("NULL", np.nan)
+
+
     def convert_date_column(self, date_col):
         """Change dtype of column to datetime"""
 
@@ -150,3 +155,108 @@ class DataCleaning():
         df.reset_index(drop=True)
 
         return df
+    
+    def check_card_data_structure(self, pdf_dfs):
+
+        expected_index = pdf_dfs[0].columns.tolist()
+        odd_pages = {}
+
+        for idx, table in enumerate(pdf_dfs):
+            if not all(col_name in table.columns.tolist() for col_name in expected_index):
+                # print(f"Page: {idx}")
+                # print(table.columns)
+                #display(table)
+                odd_pages[idx] = table.columns.tolist()
+
+        return odd_pages
+
+    def correct_card_df(self, df, col_names):
+        # todo:
+
+        df[["card_number", "expiry_date"]] = df["card_number expiry_date"].str.split(expand=True)
+        df.drop("card_number expiry_date", axis=1, inplace=True)
+        df = df[col_names]
+
+        return df
+
+
+    def merge_card_dfs(self, pdf_dfs):
+        """Merges dfs from separate pages to single df"""
+
+        merged_df = pdf_dfs[0]
+
+        for table in pdf_dfs[1:]:
+            merged_df = pd.concat([merged_df, table], ignore_index=True)
+
+        merged_df.info()
+        return merged_df
+
+    def get_non_numeric_card_numbers(self, card_df):
+        """Identify which rows contain non-numeric card number values"""
+
+        numeric_card_no = pd.to_numeric(card_df["card_number"], errors="coerce")
+        rows_to_clean = numeric_card_no.isna()
+        return rows_to_clean
+    
+    def remove_card_number_prefix(self, card_df, rows):
+        """Remove leading '?' characters from card number"""
+
+        
+        card_df.loc[rows, "card_number"] = card_df.loc[rows, "card_number"].str.lstrip('?-')
+        return card_df
+    
+    def clean_card_numbers(self, card_df):
+
+        all_non_num_card_no = self.get_non_numeric_card_numbers(card_df)
+        card_df = self.remove_card_number_prefix(card_df, all_non_num_card_no)
+
+        # remove remaining non-numeric card numbers
+        card_df = card_df[self.get_non_numeric_card_numbers(card_df)]
+
+
+
+        pass
+    
+    def clean_card_data(self, card_data):
+        """Performs various stages in cleaning card transaction data extracted from PDF"""
+
+        print(card_data.info())
+
+        # data from tabula consists of arrray of df, some of which may be have an incorrect structure
+        malformed_card_dfs = self.check_card_data_structure(card_data)
+
+        if malformed_card_dfs:
+            exp_col_names = card_data[0].columns.tolist()
+            for pg in malformed_card_dfs.keys():
+                card_data[pg] = self.correct_card_df(card_data[pg], exp_col_names)
+
+
+        # get single df from corrected dfs from each PDF page        
+        clean_card_df = self.merge_card_dfs(card_data)
+
+        # NULL to np.nan
+        clean_card_df = self.replace_null_string(clean_card_df)
+
+        # drop rows where all values are na
+        clean_card_df = clean_card_df.dropna(axis=0, how="all")
+
+        # todo: check providers
+
+        # todo: remove row where unique provider
+
+        # todo: clean card numbers - get non-numeric and remove extra characters
+
+        # todo : check card numbers are correct length
+
+
+        # todo: provider to category
+
+        # todo: expiry to date
+
+        # todo: payment date to date
+
+        print(clean_card_df.info())
+        return clean_card_df
+
+
+        pass
