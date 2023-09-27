@@ -44,7 +44,7 @@ class DatabaseConnector():
         """Create database engine and write dataframe to database table with specified name"""
         
         engine = self.init_db_engine()
-        df.to_sql(name, engine, if_exists="replace")
+        df.to_sql(name, engine, if_exists="replace", index=False)
 
 
 
