@@ -37,6 +37,8 @@ def process_card_data():
     card_cleaner = DataCleaning()
     cleaned_card_df = card_cleaner.clean_card_data(card_data)
 
+    return cleaned_card_df
+
 
 
 
@@ -44,8 +46,9 @@ def main():
 
     cleaned_user_df = process_user_data()
     save_cleaned_data(cleaned_user_df, "dim_users")
-#    process_card_data()
-
+    cleaned_card_data = process_card_data()
+#    cleaned_card_data.to_csv("cleaned_card_transactions.csv", index=False)
+    save_cleaned_data(cleaned_card_data, "dim_card_details")
 
 
 
